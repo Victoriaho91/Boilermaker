@@ -1,5 +1,5 @@
 const db = require('./db');
-const Model = require('./Model');
+const User = require('./Model');
 
 
 
@@ -9,6 +9,6 @@ const Model = require('./Model');
 module.exports = {
   db,
   models: {
-    Model
+    User
   }
 }

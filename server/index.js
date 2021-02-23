@@ -10,6 +10,9 @@ const session = require('express-session');
 const passport = require('passport');
 const SequelizeStore = require('connect-session-sequelize')(session.Store);
 const dbStore = new SequelizeStore({ db: db });
+const { clientId, clientSecret } = require('./secrets')
+const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
+
 
 module.exports = app
 
@@ -47,6 +50,32 @@ passport.deserializeUser((id, done) => {
     .catch(done);
 });
 
+const googleConfig = {
+  clientID: clientId,
+  clientSecret: clientSecret,
+  callbackURL: '/auth/google/callback'
+};
+
+const strategy = new GoogleStrategy(googleConfig, function (token, refreshToken, profile, done) {
+  const googleId = profile.id;
+  const name = profile.displayName;
+  const email = profile.emails[0].value;
+
+  User.findOne({where: { googleId: googleId  }})
+    .then(function (user) {
+      if (!user) {
+        return User.create({ name, email, googleId })
+          .then(function (user) {
+            done(null, user);
+          });
+      } else {
+        done(null, user);
+      }
+    })
+    .catch(done);
+});
+
+passport.use(strategy);
 
 app.use('/api', require('./api'))
 
